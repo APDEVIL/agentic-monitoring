@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as agentStatus from "../agentStatus.js";
+import type * as chat from "../chat.js";
 import type * as crons from "../crons.js";
 import type * as detection from "../detection.js";
 import type * as diagnosis from "../diagnosis.js";
@@ -18,8 +20,8 @@ import type * as lib_groq from "../lib/groq.js";
 import type * as lib_rules from "../lib/rules.js";
 import type * as notify from "../notify.js";
 import type * as poller from "../poller.js";
+import type * as projects from "../projects.js";
 import type * as resolution from "../resolution.js";
-import type * as targets from "../targets.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +30,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  agentStatus: typeof agentStatus;
+  chat: typeof chat;
   crons: typeof crons;
   detection: typeof detection;
   diagnosis: typeof diagnosis;
@@ -38,8 +42,8 @@ declare const fullApi: ApiFromModules<{
   "lib/rules": typeof lib_rules;
   notify: typeof notify;
   poller: typeof poller;
+  projects: typeof projects;
   resolution: typeof resolution;
-  targets: typeof targets;
 }>;
 
 /**

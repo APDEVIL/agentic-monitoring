@@ -1,18 +1,18 @@
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 
-export const pollAllTargets = internalAction({
+export const pollAllProjects = internalAction({
   args: {},
   handler: async (ctx) => {
-    const targets = await ctx.runQuery(internal.targets.listActive, {});
+    const projects = await ctx.runQuery(internal.projects.listActive, {});
 
-    for (const target of targets) {
+    for (const project of projects) {
       const start = Date.now();
       let statusCode = 0;
       let reachable = true;
 
       try {
-        const res = await fetch(target.url, { method: "GET" });
+        const res = await fetch(project.url, { method: "GET" });
         statusCode = res.status;
       } catch {
         reachable = false;
@@ -21,22 +21,22 @@ export const pollAllTargets = internalAction({
       const latency = Date.now() - start;
 
       await ctx.runMutation(internal.detection.evaluate, {
+        projectId: project._id,
         source: "poll",
-        targetId: target._id,
-        service: target.name,
+        service: project.name,
         metric: "latency_ms",
         value: latency,
       });
 
       await ctx.runMutation(internal.detection.evaluate, {
+        projectId: project._id,
         source: "poll",
-        targetId: target._id,
-        service: target.name,
+        service: project.name,
         metric: "status_code",
         value: reachable ? statusCode : 503,
       });
 
-      await ctx.runMutation(internal.targets.markChecked, { targetId: target._id });
+      await ctx.runMutation(internal.projects.markChecked, { projectId: project._id });
     }
   },
 });

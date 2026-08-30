@@ -30,23 +30,33 @@ export const saveDiagnosis = internalMutation({
 export const analyze = internalAction({
   args: { incidentId: v.id("incidents") },
   handler: async (ctx, args) => {
-    const incident = await ctx.runQuery(internal.incidents.getById, { incidentId: args.incidentId });
-    if (!incident) return;
+    await ctx.runMutation(internal.agentStatus.setRunning, { agent: "diagnosis" });
+    try {
+      const incident = await ctx.runQuery(internal.incidents.getById, { incidentId: args.incidentId });
+      if (!incident) {
+        await ctx.runMutation(internal.agentStatus.setIdle, { agent: "diagnosis", success: false });
+        return;
+      }
 
-    const result = await callGroqJSON<DiagnosisResult>([
-      {
-        role: "system",
-        content:
-          "You are a DevOps root-cause analysis agent. Given an incident, respond ONLY with JSON: " +
-          '{"rootCause": string, "confidence": "low"|"medium"|"high", "affectedComponent": string}. No prose, no markdown.',
-      },
-      {
-        role: "user",
-        content: `Incident: service=${incident.service}, metric=${incident.metric}, value=${incident.value}, threshold=${incident.threshold}, severity=${incident.severity}.`,
-      },
-    ]);
+      const result = await callGroqJSON<DiagnosisResult>([
+        {
+          role: "system",
+          content:
+            "You are a DevOps root-cause analysis agent. Given an incident, respond ONLY with JSON: " +
+            '{"rootCause": string, "confidence": "low"|"medium"|"high", "affectedComponent": string}. No prose, no markdown.',
+        },
+        {
+          role: "user",
+          content: `Incident: service=${incident.service}, metric=${incident.metric}, value=${incident.value}, threshold=${incident.threshold}, severity=${incident.severity}.`,
+        },
+      ]);
 
-    await ctx.runMutation(internal.diagnosis.saveDiagnosis, { incidentId: args.incidentId, result });
-    await ctx.scheduler.runAfter(0, internal.resolution.propose, { incidentId: args.incidentId });
+      await ctx.runMutation(internal.diagnosis.saveDiagnosis, { incidentId: args.incidentId, result });
+      await ctx.runMutation(internal.agentStatus.setIdle, { agent: "diagnosis", success: true });
+      await ctx.scheduler.runAfter(0, internal.resolution.propose, { incidentId: args.incidentId });
+    } catch (err) {
+      await ctx.runMutation(internal.agentStatus.setIdle, { agent: "diagnosis", success: false });
+      throw err;
+    }
   },
 });

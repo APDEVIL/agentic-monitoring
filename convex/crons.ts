@@ -2,5 +2,5 @@ import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
 
 const crons = cronJobs();
-crons.interval("poll all targets", { seconds: 30 }, internal.poller.pollAllTargets, {});
+crons.interval("poll all projects", { seconds: 30 }, internal.poller.pollAllProjects, {});
 export default crons;

@@ -23,26 +23,36 @@ export const markNotified = internalMutation({
 export const send = internalAction({
   args: { incidentId: v.id("incidents") },
   handler: async (ctx, args) => {
-    const incident = await ctx.runQuery(internal.notify.getIncident, { incidentId: args.incidentId });
-    if (!incident) return;
+    await ctx.runMutation(internal.agentStatus.setRunning, { agent: "notification" });
+    try {
+      const incident = await ctx.runQuery(internal.notify.getIncident, { incidentId: args.incidentId });
+      if (!incident) {
+        await ctx.runMutation(internal.agentStatus.setIdle, { agent: "notification", success: false });
+        return;
+      }
 
-    const webhookUrl = process.env.SLACK_WEBHOOK_URL;
-    const text =
-      `*[${incident.severity.toUpperCase()}] ${incident.service} - ${incident.metric}*\n` +
-      `Value: ${incident.value} (threshold: ${incident.threshold})\n` +
-      `Diagnosis: ${incident.diagnosis ?? "n/a"}\n` +
-      `Suggested fix: ${incident.suggestedFix ?? "n/a"}`;
+      const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+      const text =
+        `*[${incident.severity.toUpperCase()}] ${incident.service} - ${incident.metric}*\n` +
+        `Value: ${incident.value} (threshold: ${incident.threshold})\n` +
+        `Diagnosis: ${incident.diagnosis ?? "n/a"}\n` +
+        `Suggested fix: ${incident.suggestedFix ?? "n/a"}`;
 
-    if (webhookUrl) {
-      await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-    } else {
-      console.warn("SLACK_WEBHOOK_URL not set — skipping Slack notification");
+      if (webhookUrl) {
+        await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+      } else {
+        console.warn("SLACK_WEBHOOK_URL not set — skipping Slack notification");
+      }
+
+      await ctx.runMutation(internal.notify.markNotified, { incidentId: args.incidentId });
+      await ctx.runMutation(internal.agentStatus.setIdle, { agent: "notification", success: true });
+    } catch (err) {
+      await ctx.runMutation(internal.agentStatus.setIdle, { agent: "notification", success: false });
+      throw err;
     }
-
-    await ctx.runMutation(internal.notify.markNotified, { incidentId: args.incidentId });
   },
 });

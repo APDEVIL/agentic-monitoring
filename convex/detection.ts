@@ -5,8 +5,8 @@ import { internal } from "./_generated/api";
 
 export const evaluate = internalMutation({
   args: {
+    projectId: v.id("projects"),
     source: v.union(v.literal("poll"), v.literal("push")),
-    targetId: v.optional(v.id("targets")),
     service: v.string(),
     metric: v.union(
       v.literal("error_rate"),
@@ -18,13 +18,24 @@ export const evaluate = internalMutation({
     value: v.number(),
   },
   handler: async (ctx, args) => {
+    // bump today's detection agent count regardless of breach
+    const statusRow = await ctx.db
+      .query("agentStatus")
+      .withIndex("by_agent", (q) => q.eq("agent", "detection"))
+      .unique();
+    if (statusRow) {
+      await ctx.db.patch(statusRow._id, { todayCount: statusRow.todayCount + 1, lastRunAt: Date.now(), status: "idle" });
+    } else {
+      await ctx.db.insert("agentStatus", { agent: "detection", status: "idle", todayCount: 1, lastRunAt: Date.now() });
+    }
+
     const rule = evaluateReading({ metric: args.metric, value: args.value, service: args.service });
-    if (!rule) return null; // no breach — nothing to do
+    if (!rule) return null;
 
     const now = Date.now();
     const incidentId = await ctx.db.insert("incidents", {
+      projectId: args.projectId,
       source: args.source,
-      targetId: args.targetId,
       service: args.service,
       metric: args.metric,
       value: args.value,
@@ -42,7 +53,6 @@ export const evaluate = internalMutation({
       createdAt: now,
     });
 
-    // hand off to the next agent in the pipeline
     await ctx.scheduler.runAfter(0, internal.diagnosis.analyze, { incidentId });
 
     return incidentId;
