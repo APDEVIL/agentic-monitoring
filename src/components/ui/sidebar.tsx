@@ -17,6 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet"
+import { Slot } from "@radix-ui/react-slot";
 import { Skeleton } from "~/components/ui/skeleton"
 import {
   Tooltip,
@@ -89,10 +90,10 @@ function SidebarProvider({
   )
 
   // Helper to toggle the sidebar.
+  // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open)
-  }, [isMobile, setOpen, setOpenMobile])
-
+  }, [isMobile, setOpen])
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -113,7 +114,7 @@ function SidebarProvider({
   // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? "expanded" : "collapsed"
 
-  const contextValue = React.useMemo<SidebarContextProps>(
+    const contextValue = React.useMemo<SidebarContextProps>(
     () => ({
       state,
       open,
@@ -123,7 +124,7 @@ function SidebarProvider({
       setOpenMobile,
       toggleSidebar,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+    [state, open, setOpen, isMobile, openMobile, toggleSidebar]
   )
 
   return (
