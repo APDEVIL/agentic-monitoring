@@ -10,6 +10,7 @@
 
 import type * as agentStatus from "../agentStatus.js";
 import type * as chat from "../chat.js";
+import type * as checks from "../checks.js";
 import type * as crons from "../crons.js";
 import type * as detection from "../detection.js";
 import type * as diagnosis from "../diagnosis.js";
@@ -32,6 +33,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   agentStatus: typeof agentStatus;
   chat: typeof chat;
+  checks: typeof checks;
   crons: typeof crons;
   detection: typeof detection;
   diagnosis: typeof diagnosis;

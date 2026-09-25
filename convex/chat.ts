@@ -40,34 +40,43 @@ export const sendQuestion = mutation({
 export const ask = internalAction({
   args: { projectId: v.id("projects"), question: v.string() },
   handler: async (ctx, args) => {
-    const project = await ctx.runQuery(api.projects.get, { projectId: args.projectId });
-    const incidents = await ctx.runQuery(api.incidents.listByProject, { projectId: args.projectId });
-    const recent = incidents.slice(0, 10);
+    try {
+      const project = await ctx.runQuery(api.projects.get, { projectId: args.projectId });
+      const incidents = await ctx.runQuery(api.incidents.listByProject, { projectId: args.projectId });
+      const recent = incidents.slice(0, 10);
 
-    const context = recent
-      .map(
-        (i) =>
-          `- [${i.severity}] ${i.service} / ${i.metric}=${i.value} (status: ${i.status})` +
-          `${i.diagnosis ? `, diagnosis: ${i.diagnosis}` : ""}${i.suggestedFix ? `, fix: ${i.suggestedFix}` : ""}`
-      )
-      .join("\n");
+      const context = recent
+        .map(
+          (i) =>
+            `- [${i.severity}] ${i.service} / ${i.metric}=${i.value} (status: ${i.status})` +
+            `${i.diagnosis ? `, diagnosis: ${i.diagnosis}` : ""}${i.suggestedFix ? `, fix: ${i.suggestedFix}` : ""}`
+        )
+        .join("\n");
 
-    const answer = await callGroq([
-      {
-        role: "system",
-        content:
-          `You are Pulse, an AI assistant for a DevOps monitoring dashboard. ` +
-          `You are answering questions about the project "${project?.name}" (${project?.url}). ` +
-          `Use the incident data below to answer concisely and specifically. If it doesn't cover the question, say so.\n\n` +
-          `Recent incidents:\n${context || "No incidents recorded yet."}`,
-      },
-      { role: "user", content: args.question },
-    ]);
+      const answer = await callGroq([
+        {
+          role: "system",
+          content:
+            `You are Pulse, an AI assistant for a DevOps monitoring dashboard. ` +
+            `You are answering questions about the project "${project?.name}" (${project?.url}). ` +
+            `Use the incident data below to answer concisely and specifically. If it doesn't cover the question, say so.\n\n` +
+            `Recent incidents:\n${context || "No incidents recorded yet."}`,
+        },
+        { role: "user", content: args.question },
+      ]);
 
-    await ctx.runMutation(internal.chat.saveMessage, {
-      projectId: args.projectId,
-      role: "assistant",
-      content: answer,
-    });
+      await ctx.runMutation(internal.chat.saveMessage, {
+        projectId: args.projectId,
+        role: "assistant",
+        content: answer,
+      });
+    } catch (err) {
+      console.error("chat.ask failed:", err);
+      await ctx.runMutation(internal.chat.saveMessage, {
+        projectId: args.projectId,
+        role: "assistant",
+        content: "Sorry, I couldn't process that — check the Convex logs for chat:ask to see what went wrong.",
+      });
+    }
   },
 });

@@ -1,5 +1,5 @@
-import { Hero } from "~/components/landing/hero";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return <Hero />;
+  redirect("/projects");
 }

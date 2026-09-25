@@ -18,15 +18,20 @@ export const evaluate = internalMutation({
     value: v.number(),
   },
   handler: async (ctx, args) => {
-    // bump today's detection agent count regardless of breach
     const statusRow = await ctx.db
       .query("agentStatus")
-      .withIndex("by_agent", (q) => q.eq("agent", "detection"))
+      .withIndex("by_project_agent", (q) => q.eq("projectId", args.projectId).eq("agent", "detection"))
       .unique();
     if (statusRow) {
       await ctx.db.patch(statusRow._id, { todayCount: statusRow.todayCount + 1, lastRunAt: Date.now(), status: "idle" });
     } else {
-      await ctx.db.insert("agentStatus", { agent: "detection", status: "idle", todayCount: 1, lastRunAt: Date.now() });
+      await ctx.db.insert("agentStatus", {
+        projectId: args.projectId,
+        agent: "detection",
+        status: "idle",
+        todayCount: 1,
+        lastRunAt: Date.now(),
+      });
     }
 
     const rule = evaluateReading({ metric: args.metric, value: args.value, service: args.service });
@@ -53,7 +58,7 @@ export const evaluate = internalMutation({
       createdAt: now,
     });
 
-    await ctx.scheduler.runAfter(0, internal.diagnosis.analyze, { incidentId });
+    await ctx.scheduler.runAfter(0, internal.diagnosis.analyze, { incidentId, projectId: args.projectId });
 
     return incidentId;
   },

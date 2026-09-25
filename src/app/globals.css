@@ -20,6 +20,12 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -32,7 +38,7 @@
   --card-foreground: 0 0% 98%;
   --popover: 150 15% 6%;
   --popover-foreground: 0 0% 98%;
-  --primary: 158 64% 52%;
+  --primary: 84 68% 62%;
   --primary-foreground: 150 20% 5%;
   --secondary: 150 10% 12%;
   --secondary-foreground: 0 0% 98%;
@@ -44,7 +50,13 @@
   --destructive-foreground: 0 0% 98%;
   --border: 0 0% 100%;
   --input: 0 0% 100%;
-  --ring: 158 64% 52%;
+  --ring: 84 68% 62%;
+  --sidebar: 150 18% 4%;
+  --sidebar-foreground: 0 0% 90%;
+  --sidebar-accent: 150 10% 14%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 0 0% 100%;
+  --sidebar-ring: 84 68% 62%;
   --radius: 0.75rem;
 }
 
@@ -57,7 +69,6 @@
   }
 }
 
-/* Thin, dark-friendly scrollbar to match the aesthetic */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

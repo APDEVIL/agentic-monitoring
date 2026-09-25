@@ -49,6 +49,7 @@ export default defineSchema({
   }).index("by_incident", ["incidentId"]),
 
   agentStatus: defineTable({
+    projectId: v.id("projects"),
     agent: v.union(
       v.literal("detection"),
       v.literal("diagnosis"),
@@ -58,12 +59,14 @@ export default defineSchema({
     status: v.union(v.literal("idle"), v.literal("running"), v.literal("error")),
     todayCount: v.number(),
     lastRunAt: v.optional(v.number()),
-  }).index("by_agent", ["agent"]),
+  }).index("by_project_agent", ["projectId", "agent"]),
 
-  chatMessages: defineTable({
+    checks: defineTable({
     projectId: v.id("projects"),
-    role: v.union(v.literal("user"), v.literal("assistant")),
-    content: v.string(),
-    createdAt: v.number(),
+    service: v.string(),
+    statusCode: v.number(),
+    latencyMs: v.number(),
+    success: v.boolean(),
+    checkedAt: v.number(),
   }).index("by_project", ["projectId"]),
 });

@@ -19,6 +19,15 @@ export const pollAllProjects = internalAction({
       }
 
       const latency = Date.now() - start;
+      const success = reachable && statusCode < 500;
+
+      await ctx.runMutation(internal.checks.record, {
+        projectId: project._id,
+        service: project.name,
+        statusCode: reachable ? statusCode : 503,
+        latencyMs: latency,
+        success,
+      });
 
       await ctx.runMutation(internal.detection.evaluate, {
         projectId: project._id,

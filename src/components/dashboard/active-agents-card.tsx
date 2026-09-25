@@ -3,8 +3,13 @@
 import { useQuery } from "convex/react";
 import { Bot, Search, ShieldCheck, Wrench } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { cn } from "~/lib/utils";
+
+interface ActiveAgentsCardProps {
+  projectId: Id<"projects">;
+}
 
 const agentMeta: Record<string, { label: string; icon: typeof Bot; sub: string }> = {
   detection: { label: "Detection Agent", icon: Search, sub: "Threshold checks" },
@@ -19,8 +24,8 @@ const statusDot: Record<string, string> = {
   error: "bg-red-400",
 };
 
-export function ActiveAgentsCard() {
-  const agents = useQuery(api.agentStatus.list);
+export function ActiveAgentsCard({ projectId }: ActiveAgentsCardProps) {
+  const agents = useQuery(api.agentStatus.list, { projectId });
 
   return (
     <Card className="border-white/10 bg-white/[0.03]">
@@ -53,4 +58,4 @@ export function ActiveAgentsCard() {
       </CardContent>
     </Card>
   );
-}
+} 

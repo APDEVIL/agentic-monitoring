@@ -14,7 +14,7 @@ interface ChecksHeroCardProps {
 
 export function ChecksHeroCard({ projectId }: ChecksHeroCardProps) {
   const stats = useQuery(api.incidents.getProjectStats, { projectId });
-  const agents = useQuery(api.agentStatus.list);
+  const agents = useQuery(api.agentStatus.list, { projectId });
   const checksRun = agents?.find((a) => a.agent === "detection")?.todayCount ?? 0;
   const successRate = stats?.successRate ?? 100;
 
@@ -57,13 +57,13 @@ export function ChecksHeroCard({ projectId }: ChecksHeroCardProps) {
         </div>
       </div>
 
-    <Button
+      <Button
         className="mt-6 bg-lime-950 text-lime-200 hover:bg-lime-900"
         render={<Link href={`/projects/${projectId}/runs`} />}
         size="sm"
->
-  <PlayCircle className="mr-2 h-4 w-4" /> Watch live runs
-</Button>
+      >
+        <PlayCircle className="mr-2 h-4 w-4" /> Watch live runs
+      </Button>
     </motion.div>
   );
 }
