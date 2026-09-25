@@ -61,7 +61,14 @@ export default defineSchema({
     lastRunAt: v.optional(v.number()),
   }).index("by_project_agent", ["projectId", "agent"]),
 
-    checks: defineTable({
+  chatMessages: defineTable({
+    projectId: v.id("projects"),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    content: v.string(),
+    createdAt: v.number(),
+  }).index("by_project", ["projectId"]),
+
+  checks: defineTable({
     projectId: v.id("projects"),
     service: v.string(),
     statusCode: v.number(),
